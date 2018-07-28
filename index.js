@@ -2,17 +2,18 @@
 /**
  * Module dependencies.
  */
-
+// strong uid
 var uid2 = require('uid2');
-var redis = require('redis').createClient;
+var redis = require('redis').createClient; // redis module
+// A fast Node.js implementation of the latest MessagePack spec.
 var msgpack = require('notepack.io');
-var Adapter = require('socket.io-adapter');
-var debug = require('debug')('socket.io-redis');
+var Adapter = require('socket.io-adapter'); // the node.js adapter
+var debug = require('debug')('socket.io-redis'); // the debag module
 
 /**
  * Module exports.
  */
-
+// export the constructor
 module.exports = adapter;
 
 /**
@@ -39,19 +40,24 @@ var requestTypes = {
 
 function adapter(uri, opts) {
   opts = opts || {};
-
+  // console.log('uri = ', uri); // uri =  { host: 'localhost', port: 6379 }
+  // console.log('opts = ', opts); // opts =  {}
   // handle options only
-  if ('object' == typeof uri) {
+  if ('object' == typeof uri) { // if uri is an object type, there only options
     opts = uri;
     uri = null;
   }
 
   // opts
   var pub = opts.pubClient;
+  // console.log('pub = ', pub); // undefined
+  // console.log('here we are');
   var sub = opts.subClient;
+  // console.log('sub = ', sub); // undefined
   var prefix = opts.key || 'socket.io';
+  // console.log('prefix = ', prefix); // socket.io
   var requestsTimeout = opts.requestsTimeout || 5000;
-
+  // console.log('requestsTimeout = ', requestsTimeout); // 5000
   // init clients if needed
   function createClient() {
     if (uri) {
@@ -61,12 +67,14 @@ function adapter(uri, opts) {
       return redis(opts);
     }
   }
-
+  // create the pub and sub clients
   if (!pub) pub = createClient();
   if (!sub) sub = createClient();
+  // console.log('pub = ', pub, ' sub= ', sub); // will be return an object
 
   // this server's key
   var uid = uid2(6);
+  // console.log('uid = ', uid); // uid =  2wBHUZ
 
   /**
    * Adapter constructor.
@@ -74,13 +82,18 @@ function adapter(uri, opts) {
    * @param {String} namespace name
    * @api public
    */
-
+  // nsp is namespace
   function Redis(nsp){
-    Adapter.call(this, nsp);
+    // console.log('nsp = ', nsp);
+    // this thing probabely make a closure
+    // this is call the function Adapter with this as argument and nsp
+    Adapter.call(this, nsp); // this is call the Redis function
+    console.log('here we go');
 
     this.uid = uid;
     this.prefix = prefix;
     this.requestsTimeout = requestsTimeout;
+    console.log('this = ', this);
 
     this.channel = prefix + '#' + nsp.name + '#';
     this.requestChannel = prefix + '-request#' + this.nsp.name + '#';
@@ -90,6 +103,7 @@ function adapter(uri, opts) {
 
     if (String.prototype.startsWith) {
       this.channelMatches = function (messageChannel, subscribedChannel) {
+        // The startsWith() method determines whether a string begins with the characters of a specified string, returning true or false as appropriate.
         return messageChannel.startsWith(subscribedChannel);
       }
     } else { // Fallback to other impl for older Node.js
@@ -105,13 +119,13 @@ function adapter(uri, opts) {
     sub.psubscribe(this.channel + '*', function(err){
       if (err) self.emit('error', err);
     });
-
+    // bind onmessage
     sub.on('pmessageBuffer', this.onmessage.bind(this));
 
     sub.subscribe([this.requestChannel, this.responseChannel], function(err){
       if (err) self.emit('error', err);
     });
-
+    // bind onrequest
     sub.on('messageBuffer', this.onrequest.bind(this));
 
     function onError(err) {
@@ -119,12 +133,13 @@ function adapter(uri, opts) {
     }
     pub.on('error', onError);
     sub.on('error', onError);
-  }
+  } // function Redis(nsp){
 
   /**
    * Inherits from `Adapter`.
    */
-
+  // Adapter.prototype gets methods from socket.io-adapter
+  // The __proto__ property of Object.prototype is an accessor property (a getter function and a setter function) that exposes the internal [[Prototype]] (either an object or null) of the object through which it is accessed.
   Redis.prototype.__proto__ = Adapter.prototype;
 
   /**
@@ -736,12 +751,14 @@ function adapter(uri, opts) {
     });
   };
 
-  Redis.uid = uid;
-  Redis.pubClient = pub;
-  Redis.subClient = sub;
-  Redis.prefix = prefix;
-  Redis.requestsTimeout = requestsTimeout;
+  // put to the Redis constructor properties: uid, pubClient, subClient, prefix, requestsTimeout
+  // Redis.uid = uid;
+  // Redis.pubClient = pub;
+  // Redis.subClient = sub;
+  // Redis.prefix = prefix;
+  // Redis.requestsTimeout = requestsTimeout;
 
-  return Redis;
+  console.log('Redis = ', Redis.subClient);
+  return Redis; // this is return  the constructor function Redis from the top
 
-}
+} // function adapter(uri, opts) {
